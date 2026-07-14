@@ -3,13 +3,6 @@ import { ERROR_CODES, messageForCode } from './errorCodes';
 
 export const API_BASE_URL: string = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080/api';
 
-/**
- * 임시 목업 모드 스위치. 백엔드가 아직 없어서 프론트 화면만 확인하기 위한 용도.
- * 실제 백엔드가 준비되면 .env의 VITE_USE_MOCK_API를 false로 바꾸거나 지우면 된다.
- * (제거 시: src/api/mock 폴더와 각 api/*.ts의 USE_MOCK 분기만 지우면 됨)
- */
-export const USE_MOCK = import.meta.env.VITE_USE_MOCK_API === 'true';
-
 const ACCESS_TOKEN_KEY = 'bap_access_token';
 const REFRESH_TOKEN_KEY = 'bap_refresh_token';
 
