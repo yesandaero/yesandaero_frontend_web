@@ -113,7 +113,9 @@ export async function apiFetch<T>(path: string, options: RequestOptions = {}): P
   const url = buildUrl(path, query);
 
   async function doFetch(): Promise<Response> {
-    const headers: Record<string, string> = {};
+    const headers: Record<string, string> = {
+      'ngrok-skip-browser-warning': 'true',
+    };
     if (body !== undefined) headers['Content-Type'] = 'application/json';
     if (auth) {
       const token = getAccessToken();
