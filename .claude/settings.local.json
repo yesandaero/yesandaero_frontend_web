@@ -1,0 +1,16 @@
+{
+  "permissions": {
+    "allow": [
+      "Skill(artifact-design)",
+      "Skill(artifact-design:*)",
+      "Bash(npx tsc *)",
+      "Bash(echo \"EXIT:$?\")",
+      "Bash(npx oxlint *)",
+      "Bash(echo \"tsc EXIT:$?\")",
+      "Bash(echo \"oxlint EXIT:$?\")",
+      "WebFetch(domain:www.notion.so)",
+      "WebFetch(domain:app.notion.com)",
+      "Bash(node -e \"const p=require\\('./package.json'\\); console.log\\(JSON.stringify\\(p.scripts,null,2\\)\\); console.log\\('deps:', Object.keys\\(p.dependencies\\).join\\(', '\\)\\)\")"
+    ]
+  }
+}
