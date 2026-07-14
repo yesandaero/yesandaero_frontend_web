@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react';
+import { useEffect, type ReactNode } from 'react';
 import { Navigate, Outlet, Route, Routes, useLocation } from 'react-router-dom';
 import { AppProvider } from './state/AppContext';
 import { useApp } from './state/context';
@@ -101,8 +101,13 @@ function StoreRoute() {
 }
 
 function MenuRoute() {
-  const { menu, addMenu, updateMenu, requestDeleteMenu, toggleSoldOut } = useApp();
-  return <MenuPage menu={menu} onAdd={addMenu} onUpdate={updateMenu} onDelete={requestDeleteMenu} onToggleSoldOut={toggleSoldOut} />;
+  const { menu, menuLoading, loadMenu } = useApp();
+  useEffect(() => {
+    loadMenu();
+    // 메뉴 페이지 진입 시 한 번만 조회한다.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+  return <MenuPage menu={menu} loading={menuLoading} onReload={loadMenu} />;
 }
 
 /** 로그인/회원가입 화면에서도 토스트는 보여야 한다 */

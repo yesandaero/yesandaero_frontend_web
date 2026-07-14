@@ -17,13 +17,6 @@ import type {
 import type { ConfirmDeleteTarget, MenuItem, StoreInfo } from '../types';
 import { AppContext, type StoreStatus } from './context';
 
-const initialMenu: MenuItem[] = [
-  { id: 1, name: '순대국밥', price: 9000, desc: '사골국물에 순대와 내장을 듬뿍', soldOut: false },
-  { id: 2, name: '돼지국밥', price: 9000, desc: '진하게 우려낸 사골 육수', soldOut: false },
-  { id: 3, name: '수육(小)', price: 18000, desc: '두 사람이 먹기 좋은 양', soldOut: true },
-  { id: 4, name: '계란찜', price: 4000, desc: '뚝배기 계란찜', soldOut: false },
-];
-
 function errMsg(e: unknown, fallback: string): string {
   return e instanceof ApiError ? e.message : fallback;
 }
@@ -35,8 +28,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [store, setStore] = useState<StoreInfo | null>(null);
   const [storeStatus, setStoreStatus] = useState<StoreStatus>('idle');
 
-  const [menu, setMenu] = useState<MenuItem[]>(initialMenu);
-  const [nextMenuId, setNextMenuId] = useState(5);
+  const [menu, setMenu] = useState<MenuItem[]>([]);
+  const [menuLoading, setMenuLoading] = useState(false);
 
   const [couponTemplates, setCouponTemplates] = useState<CouponTemplate[]>([]);
   const [couponTemplatesLoading, setCouponTemplatesLoading] = useState(false);
@@ -134,6 +127,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setCouponTemplates([]);
     setPartnerships([]);
     setStatistics(null);
+    setMenu([]);
   }
 
   function logout() {
@@ -162,22 +156,17 @@ export function AppProvider({ children }: { children: ReactNode }) {
     }
   }
 
-  function addMenu(item: Omit<MenuItem, 'id' | 'soldOut'>) {
-    setMenu((list) => [...list, { ...item, id: nextMenuId, soldOut: false }]);
-    setNextMenuId((n) => n + 1);
-    showToast('메뉴를 추가했어요');
-  }
-  function updateMenu(id: number, item: Omit<MenuItem, 'id' | 'soldOut'>) {
-    setMenu((list) => list.map((m) => (m.id === id ? { ...m, ...item } : m)));
-    showToast('메뉴를 수정했어요');
-  }
-  function toggleSoldOut(id: number) {
-    setMenu((list) => list.map((m) => (m.id === id ? { ...m, soldOut: !m.soldOut } : m)));
-  }
-  function requestDeleteMenu(id: number) {
-    const m = menu.find((x) => x.id === id);
-    if (!m) return;
-    setConfirmDelete({ type: 'menu', id, label: m.name });
+  async function loadMenu() {
+    if (!store) return;
+    setMenuLoading(true);
+    try {
+      const detail = await storeApi.getStoreDetail(store.storeId);
+      setMenu(detail.menus ?? []);
+    } catch (e) {
+      showToast(errMsg(e, '메뉴를 불러오지 못했어요'));
+    } finally {
+      setMenuLoading(false);
+    }
   }
 
   async function loadCouponTemplates() {
@@ -200,9 +189,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
       showToast(errMsg(e, '쿠폰 템플릿 등록에 실패했어요'));
     }
   }
-  async function issueCoupon(templateId: number) {
+  async function issueCoupon(templateId: number, targetStoreId: number) {
     try {
-      const res = await couponsApi.issueCoupon({ templateId });
+      const res = await couponsApi.issueCoupon({ templateId, targetStoreId });
       setIssuedCoupon(res);
       showToast('쿠폰을 발급했어요');
     } catch (e) {
@@ -283,11 +272,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
     const { type, id } = confirmDelete;
     setConfirmDelete(null);
 
-    if (type === 'menu') {
-      setMenu((list) => list.filter((m) => m.id !== id));
-      showToast('메뉴를 삭제했어요');
-      return;
-    }
     if (type === 'partnership') {
       try {
         await partnershipsApi.terminatePartnership(id);
@@ -320,10 +304,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
         registerStore,
         saveStore,
         menu,
-        addMenu,
-        updateMenu,
-        toggleSoldOut,
-        requestDeleteMenu,
+        menuLoading,
+        loadMenu,
         couponTemplates,
         couponTemplatesLoading,
         loadCouponTemplates,

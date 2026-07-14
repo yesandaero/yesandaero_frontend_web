@@ -13,15 +13,15 @@ export interface StoreInfo {
 }
 
 export interface MenuItem {
-  id: number;
+  menuId: number;
   name: string;
   price: number;
-  desc: string;
-  soldOut: boolean;
+  discountedPrice: number;
+  description: string;
 }
 
 export interface ConfirmDeleteTarget {
-  type: 'menu' | 'partnership' | 'coupon-template';
+  type: 'partnership' | 'coupon-template';
   id: number;
   label: string;
 }

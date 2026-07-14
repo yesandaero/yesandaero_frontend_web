@@ -25,17 +25,15 @@ export interface AppContextValue {
   saveStore: (partial: UpdateStoreRequest) => Promise<void>;
 
   menu: MenuItem[];
-  addMenu: (item: Omit<MenuItem, 'id' | 'soldOut'>) => void;
-  updateMenu: (id: number, item: Omit<MenuItem, 'id' | 'soldOut'>) => void;
-  toggleSoldOut: (id: number) => void;
-  requestDeleteMenu: (id: number) => void;
+  menuLoading: boolean;
+  loadMenu: () => Promise<void>;
 
   couponTemplates: CouponTemplate[];
   couponTemplatesLoading: boolean;
   loadCouponTemplates: () => Promise<void>;
   addCouponTemplate: (payload: CreateCouponTemplateRequest) => Promise<void>;
   issuedCoupon: IssueCouponResponse | null;
-  issueCoupon: (templateId: number) => Promise<void>;
+  issueCoupon: (templateId: number, targetStoreId: number) => Promise<void>;
   clearIssuedCoupon: () => void;
   requestDeleteCouponTemplate: (templateId: number) => void;
 

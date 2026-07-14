@@ -209,6 +209,8 @@ input, select, textarea{ font-family:inherit; }
 /* ---------- auth screen ---------- */
 .auth-wrap{ min-height:100vh; display:flex; align-items:center; justify-content:center; padding:24px; background:var(--page-bg); }
 .auth-card{ width:100%; max-width:460px; background:var(--card); border:1px solid var(--border); border-radius:24px; box-shadow:var(--shadow-lg); padding:42px 38px; }
+.form-section{ margin:20px 0 14px; padding:18px; border:1px solid var(--border); border-radius:14px; background:var(--card-soft); }
+.section-title{ margin-bottom:14px; color:var(--ink); font-size:15px; font-weight:800; }
 .auth-logo{ text-align:center; margin-bottom:26px; }
 .auth-logo .mark{ width:66px; height:66px; border-radius:20px; background:linear-gradient(160deg,var(--primary-400),var(--primary-600)); display:flex; align-items:center; justify-content:center; color:var(--on-brand); margin:0 auto 14px; box-shadow:0 10px 22px -8px rgba(233,168,37,.55); }
 .auth-logo .t1{ font-size:21px; font-weight:800; color:var(--brand-ink); }

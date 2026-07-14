@@ -60,6 +60,10 @@ export function CouponPage() {
     issuedCoupon,
     clearIssuedCoupon,
     requestDeleteCouponTemplate,
+    partnerships,
+    partnershipsLoading,
+    loadPartnerships,
+    showToast,
   } = useApp();
 
   const [adding, setAdding] = useState(false);
@@ -68,13 +72,31 @@ export function CouponPage() {
   const [discountValue, setDiscountValue] = useState('');
   const [minOrderAmount, setMinOrderAmount] = useState('');
   const [validDays, setValidDays] = useState('14');
+  const [targetStoreId, setTargetStoreId] = useState('');
   const [errors, setErrors] = useState<Record<string, string | undefined>>({});
   const clearErr = (key: string) => setErrors((e) => ({ ...e, [key]: undefined }));
 
   useEffect(() => {
     loadCouponTemplates();
+    loadPartnerships();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  const acceptedPartners = partnerships.filter((partnership) => partnership.status === 'ACCEPTED');
+
+  useEffect(() => {
+    if (!targetStoreId && acceptedPartners.length) {
+      setTargetStoreId(String(acceptedPartners[0].partnerStore.storeId));
+    }
+  }, [acceptedPartners, targetStoreId]);
+
+  function issue(templateId: number) {
+    if (!targetStoreId) {
+      showToast('쿠폰 사용처로 지정할 제휴 가게를 선택해주세요');
+      return;
+    }
+    issueCoupon(templateId, Number(targetStoreId));
+  }
 
   function startAdd() {
     setName('');
@@ -122,6 +144,22 @@ export function CouponPage() {
         )}
       </div>
 
+      <div className="inline-form" style={{ marginBottom: 18 }}>
+        <Field label="쿠폰 사용처 (수락된 제휴 가게)">
+          <select value={targetStoreId} onChange={(e) => setTargetStoreId(e.target.value)} disabled={partnershipsLoading}>
+            <option value="">{partnershipsLoading ? '제휴 가게를 불러오는 중...' : '사용처를 선택해주세요'}</option>
+            {acceptedPartners.map((partnership) => (
+              <option key={partnership.partnershipId} value={partnership.partnerStore.storeId}>
+                {partnership.partnerStore.name}
+              </option>
+            ))}
+          </select>
+        </Field>
+        {!partnershipsLoading && !acceptedPartners.length && (
+          <div className="empty-inline">쿠폰을 발급하려면 먼저 수락된 제휴 가게가 필요해요.</div>
+        )}
+      </div>
+
       {adding && (
         <div className="inline-form">
           <div className="field-row3">
@@ -165,10 +203,19 @@ export function CouponPage() {
                 {t.isMine ? ' · 내 템플릿' : ' · 제휴 가게 템플릿'}
               </div>
               <div className="label"><Icon name="tag" size={16} />{t.name}</div>
-              <div className="scope">{t.store.name} · 최소주문 {fmt(t.minOrderAmount)}원 · {t.validDays}일 유효</div>
+              <div className="scope">
+                {t.store?.name ?? t.storeName ?? '가게 정보 없음'} · 최소주문 {fmt(t.minOrderAmount)}원 · {t.validDays}일 유효
+              </div>
             </div>
             <div className="promo-right">
-              <button className="btn btn-primary btn-sm" onClick={() => issueCoupon(t.templateId)}>발급</button>
+              <button
+                className="btn btn-primary btn-sm"
+                disabled={!t.isMine || !targetStoreId}
+                title={!t.isMine ? '본인 가게의 템플릿만 발급할 수 있어요' : undefined}
+                onClick={() => issue(t.templateId)}
+              >
+                발급
+              </button>
               {t.isMine && (
                 <button className="icon-btn" title="삭제" onClick={() => requestDeleteCouponTemplate(t.templateId)}>
                   <Icon name="trash" size={16} />

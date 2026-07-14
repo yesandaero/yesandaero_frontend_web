@@ -43,6 +43,21 @@ export interface StoreDetail {
   phone: string;
   avgPrice: number;
   description: string;
+  openTime: string;
+  closeTime: string;
+  minOrderAmount: number;
+  distanceMeters: number | null;
+  walkingMinutes: number | null;
+  menus: StoreMenu[];
+  usableCouponCount: number;
+}
+
+export interface StoreMenu {
+  menuId: number;
+  name: string;
+  description: string;
+  price: number;
+  discountedPrice: number;
 }
 
 export interface RegisterStoreRequest {
@@ -54,13 +69,26 @@ export interface RegisterStoreRequest {
   phone: string;
   avgPrice: number;
   description: string;
+  openTime: string;
+  closeTime: string;
+  minOrderAmount: number;
+  menus: RegisterStoreMenuRequest[];
+}
+
+export interface RegisterStoreMenuRequest {
+  name: string;
+  description: string;
+  price: number;
+  discountedPrice: number;
 }
 
 export interface RegisterStoreResponse {
   storeId: number;
 }
 
-export type UpdateStoreRequest = Partial<Omit<RegisterStoreRequest, 'latitude' | 'longitude'>>;
+export type UpdateStoreRequest = Partial<
+  Omit<RegisterStoreRequest, 'latitude' | 'longitude' | 'openTime' | 'closeTime' | 'minOrderAmount' | 'menus'>
+>;
 
 export interface CouponTemplateStoreRef {
   storeId: number;
@@ -69,7 +97,9 @@ export interface CouponTemplateStoreRef {
 
 export interface CouponTemplate {
   templateId: number;
-  store: CouponTemplateStoreRef;
+  /** 구 명세는 store 객체, 일부 백엔드 응답은 storeName만 반환한다. */
+  store?: CouponTemplateStoreRef;
+  storeName?: string;
   name: string;
   discountType: DiscountType;
   discountValue: number;
@@ -104,6 +134,7 @@ export interface CreateCouponTemplateResponse {
 
 export interface IssueCouponRequest {
   templateId: number;
+  targetStoreId: number;
 }
 
 export interface IssueCouponResponse {

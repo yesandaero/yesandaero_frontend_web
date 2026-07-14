@@ -1,7 +1,9 @@
 import type { AuthTokens, RefreshRequest } from './types';
 import { ERROR_CODES, messageForCode } from './errorCodes';
 
-export const API_BASE_URL: string = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080/api';
+// 개발 환경에서는 Vite 프록시를 거쳐 CORS 없이 백엔드에 요청한다.
+// 배포 시 VITE_API_BASE_URL을 지정하면 기존처럼 절대 주소도 사용할 수 있다.
+export const API_BASE_URL: string = import.meta.env.VITE_API_BASE_URL || '/api';
 
 const ACCESS_TOKEN_KEY = 'bap_access_token';
 const REFRESH_TOKEN_KEY = 'bap_refresh_token';
@@ -85,7 +87,7 @@ async function refreshAccessToken(): Promise<AuthTokens> {
 }
 
 function buildUrl(path: string, query?: Record<string, string | undefined>): string {
-  const url = new URL(`${API_BASE_URL}${path}`);
+  const url = new URL(`${API_BASE_URL}${path}`, window.location.origin);
   if (query) {
     Object.entries(query).forEach(([key, value]) => {
       if (value !== undefined) url.searchParams.set(key, value);
