@@ -210,8 +210,7 @@ export function CouponPage() {
             <div className="promo-right">
               <button
                 className="btn btn-primary btn-sm"
-                disabled={!t.isMine || !targetStoreId}
-                title={!t.isMine ? '본인 가게의 템플릿만 발급할 수 있어요' : undefined}
+                disabled={!targetStoreId}
                 onClick={() => issue(t.templateId)}
               >
                 발급

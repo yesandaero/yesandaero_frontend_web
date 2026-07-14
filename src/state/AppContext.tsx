@@ -21,6 +21,33 @@ function errMsg(e: unknown, fallback: string): string {
   return e instanceof ApiError ? e.message : fallback;
 }
 
+const CURRENT_EMAIL_KEY = 'bap_current_email';
+const STORE_IDS_KEY = 'bap_store_ids_by_email';
+
+function readStoreIds(): Record<string, number> {
+  try {
+    return JSON.parse(localStorage.getItem(STORE_IDS_KEY) || '{}') as Record<string, number>;
+  } catch {
+    return {};
+  }
+}
+
+function rememberStoreId(email: string, storeId: number) {
+  localStorage.setItem(STORE_IDS_KEY, JSON.stringify({ ...readStoreIds(), [email]: storeId }));
+}
+
+function storeIdFromToken(token: string | null): number | undefined {
+  if (!token) return undefined;
+  try {
+    const payload = JSON.parse(atob(token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/')));
+    const value = payload.storeId ?? payload.store_id ?? payload.store?.storeId;
+    const storeId = Number(value);
+    return Number.isInteger(storeId) && storeId > 0 ? storeId : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
 export function AppProvider({ children }: { children: ReactNode }) {
   const [authed, setAuthed] = useState(() => !!getAccessToken());
   const [authLoading, setAuthLoading] = useState(false);
@@ -37,6 +64,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   const [partnerships, setPartnerships] = useState<Partnership[]>([]);
   const [partnershipsLoading, setPartnershipsLoading] = useState(false);
+  const [partnershipRequestLoading, setPartnershipRequestLoading] = useState(false);
 
   const [statistics, setStatistics] = useState<StoreStatistics | null>(null);
   const [statisticsLoading, setStatisticsLoading] = useState(false);
@@ -51,10 +79,14 @@ export function AppProvider({ children }: { children: ReactNode }) {
     toastTimer.current = window.setTimeout(() => setToastMsg(''), 2200);
   }
 
-  async function refreshStore() {
+  async function refreshStore(knownStoreId?: number) {
     setStoreStatus('loading');
     try {
-      const detail = await storeApi.getMyStore();
+      const currentEmail = localStorage.getItem(CURRENT_EMAIL_KEY) || '';
+      const cachedStoreId = currentEmail ? readStoreIds()[currentEmail] : undefined;
+      const storeId = knownStoreId ?? cachedStoreId ?? storeIdFromToken(getAccessToken());
+      const detail = storeId ? await storeApi.getStoreDetail(storeId) : await storeApi.getMyStore();
+      if (currentEmail) rememberStoreId(currentEmail, detail.storeId);
       setStore(detail);
       setStoreStatus('ready');
     } catch (e) {
@@ -92,9 +124,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
     try {
       const res = await authApi.login({ email, password });
       setTokens({ accessToken: res.accessToken, refreshToken: res.refreshToken });
+      localStorage.setItem(CURRENT_EMAIL_KEY, email);
       setAuthed(true);
       showToast('로그인 완료! 오늘도 화이팅이에요');
-      await refreshStore();
+      await refreshStore(res.storeId ?? res.store?.storeId ?? storeIdFromToken(res.accessToken));
     } catch (e) {
       showToast(errMsg(e, '로그인에 실패했어요'));
     } finally {
@@ -108,9 +141,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
       await authApi.signup({ ...payload, role: 'OWNER' });
       const res = await authApi.login({ email: payload.email, password: payload.password });
       setTokens({ accessToken: res.accessToken, refreshToken: res.refreshToken });
+      localStorage.setItem(CURRENT_EMAIL_KEY, payload.email);
       setAuthed(true);
       showToast('사장님 계정이 만들어졌어요. 가게 정보를 등록해볼까요?');
-      await refreshStore();
+      await refreshStore(res.storeId ?? res.store?.storeId ?? storeIdFromToken(res.accessToken));
     } catch (e) {
       showToast(errMsg(e, '회원가입에 실패했어요'));
     } finally {
@@ -137,9 +171,11 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   async function registerStore(payload: RegisterStoreRequest) {
     try {
-      await storeApi.registerStore(payload);
+      const result = await storeApi.registerStore(payload);
+      const currentEmail = localStorage.getItem(CURRENT_EMAIL_KEY);
+      if (currentEmail) rememberStoreId(currentEmail, result.storeId);
       showToast('가게가 등록됐어요');
-      await refreshStore();
+      await refreshStore(result.storeId);
     } catch (e) {
       showToast(errMsg(e, '가게 등록에 실패했어요'));
     }
@@ -225,6 +261,24 @@ export function AppProvider({ children }: { children: ReactNode }) {
       await loadPartnerships();
     } catch (e) {
       showToast(errMsg(e, '제휴 요청에 실패했어요'));
+    }
+  }
+  async function requestPartnershipByStoreName(storeName: string): Promise<boolean> {
+    setPartnershipRequestLoading(true);
+    try {
+      const normalizedName = storeName.trim().toLocaleLowerCase();
+      const res = await storeApi.searchStores(storeName.trim());
+      const target = (res.content ?? []).find((candidate) => candidate.name.trim().toLocaleLowerCase() === normalizedName);
+      if (!target) return false;
+      await partnershipsApi.requestPartnership({ receiverStoreId: target.storeId });
+      showToast('제휴 요청을 보냈어요');
+      await loadPartnerships();
+      return true;
+    } catch (e) {
+      showToast(errMsg(e, '제휴 요청에 실패했어요'));
+      return false;
+    } finally {
+      setPartnershipRequestLoading(false);
     }
   }
   async function acceptPartnership(id: number) {
@@ -318,6 +372,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
         partnershipsLoading,
         loadPartnerships,
         requestPartnership,
+        requestPartnershipByStoreName,
+        partnershipRequestLoading,
         acceptPartnership,
         rejectPartnership,
         requestTerminatePartnership,

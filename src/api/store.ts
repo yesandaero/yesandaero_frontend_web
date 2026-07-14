@@ -1,5 +1,5 @@
 import { apiFetch } from './client';
-import type { RegisterStoreRequest, RegisterStoreResponse, StoreDetail, UpdateStoreRequest } from './types';
+import type { RegisterStoreRequest, RegisterStoreResponse, StoreDetail, StoreSearchResponse, UpdateStoreRequest } from './types';
 
 export function getMyStore(): Promise<StoreDetail> {
   return apiFetch<StoreDetail>('/stores/me');
@@ -12,6 +12,10 @@ export function getStoreDetail(storeId: number, lat?: number, lng?: number): Pro
       lng: lng === undefined ? undefined : String(lng),
     },
   });
+}
+
+export function searchStores(keyword: string): Promise<StoreSearchResponse> {
+  return apiFetch<StoreSearchResponse>('/stores/search', { query: { keyword } });
 }
 
 export function registerStore(body: RegisterStoreRequest): Promise<RegisterStoreResponse> {

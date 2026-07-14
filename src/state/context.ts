@@ -41,6 +41,8 @@ export interface AppContextValue {
   partnershipsLoading: boolean;
   loadPartnerships: () => Promise<void>;
   requestPartnership: (receiverStoreId: number) => Promise<void>;
+  requestPartnershipByStoreName: (storeName: string) => Promise<boolean>;
+  partnershipRequestLoading: boolean;
   acceptPartnership: (id: number) => Promise<void>;
   rejectPartnership: (id: number) => Promise<void>;
   requestTerminatePartnership: (id: number) => void;

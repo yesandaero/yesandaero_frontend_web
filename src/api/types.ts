@@ -16,6 +16,9 @@ export interface LoginRequest {
 
 export interface LoginResponse extends AuthTokens {
   role: UserRole;
+  /** 백엔드 버전에 따라 로그인 응답에 포함될 수 있다. */
+  storeId?: number;
+  store?: { storeId: number };
 }
 
 export interface SignupRequest {
@@ -58,6 +61,20 @@ export interface StoreMenu {
   description: string;
   price: number;
   discountedPrice: number;
+}
+
+export interface StoreSearchResult {
+  storeId: number;
+  name: string;
+  category: StoreCategory;
+  address?: string;
+  partnershipStatus?: PartnershipStatus | 'NONE';
+}
+
+export interface StoreSearchResponse {
+  content: StoreSearchResult[];
+  page: number;
+  totalPages: number;
 }
 
 export interface RegisterStoreRequest {

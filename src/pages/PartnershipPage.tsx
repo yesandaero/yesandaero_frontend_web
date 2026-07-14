@@ -3,7 +3,6 @@ import { Icon } from '../components/icons/Icon';
 import { Field } from '../components/Field';
 import { categoryLabel } from '../data/constants';
 import { useApp } from '../state/context';
-import * as v from '../utils/validation';
 import type { Partnership, PartnershipStatus } from '../api/types';
 
 function statusMeta(status: PartnershipStatus): { label: string; badgeClass: string } {
@@ -48,22 +47,34 @@ function PartnershipRow({ p }: { p: Partnership }) {
 }
 
 export function PartnershipPage() {
-  const { partnerships, partnershipsLoading, loadPartnerships, requestPartnership } = useApp();
+  const {
+    partnerships,
+    partnershipsLoading,
+    loadPartnerships,
+    requestPartnershipByStoreName,
+    partnershipRequestLoading,
+  } = useApp();
   const [adding, setAdding] = useState(false);
-  const [receiverStoreId, setReceiverStoreId] = useState('');
-  const [idError, setIdError] = useState<string | undefined>(undefined);
+  const [storeName, setStoreName] = useState('');
+  const [searchError, setSearchError] = useState<string | undefined>(undefined);
 
   useEffect(() => {
     loadPartnerships();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  function submitRequest() {
-    const err = v.positiveInteger(receiverStoreId, '상대 가게 ID');
-    setIdError(err);
-    if (err) return;
-    requestPartnership(Number(receiverStoreId));
-    setReceiverStoreId('');
+  async function submitRequest() {
+    if (!storeName.trim()) {
+      setSearchError('상대 가게 이름을 입력해주세요');
+      return;
+    }
+    setSearchError(undefined);
+    const success = await requestPartnershipByStoreName(storeName.trim());
+    if (!success) {
+      setSearchError('존재하지 않는 가게입니다.');
+      return;
+    }
+    setStoreName('');
     setAdding(false);
   }
 
@@ -89,13 +100,21 @@ export function PartnershipPage() {
       {adding && (
         <div className="inline-form">
           <div className="field-row">
-            <Field label="상대 가게 ID" error={idError} hint={idError ? undefined : '가게 검색 기능은 추후 연동 예정이라 지금은 가게 ID로 요청해요.'}>
-              <input type="number" min={1} placeholder="12" value={receiverStoreId} onChange={(e) => { setReceiverStoreId(e.target.value); setIdError(undefined); }} />
+            <Field label="상대 가게 이름" error={searchError}>
+              <input
+                type="search"
+                placeholder="예: 흔카페"
+                value={storeName}
+                onChange={(e) => { setStoreName(e.target.value); setSearchError(undefined); }}
+                onKeyDown={(e) => { if (e.key === 'Enter') submitRequest(); }}
+              />
             </Field>
           </div>
           <div className="form-actions">
             <button className="btn btn-outline btn-sm" onClick={() => setAdding(false)}>취소</button>
-            <button className="btn btn-primary btn-sm" onClick={submitRequest}>요청 보내기</button>
+            <button className="btn btn-primary btn-sm" onClick={submitRequest} disabled={partnershipRequestLoading}>
+              {partnershipRequestLoading ? '확인 중...' : '요청 보내기'}
+            </button>
           </div>
         </div>
       )}
