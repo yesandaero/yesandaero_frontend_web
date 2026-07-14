@@ -10,7 +10,7 @@ import type {
 
 export function listIssuableTemplates(): Promise<CouponTemplateListResponse> {
   const acceptedPartnerStoreIds = new Set(
-    mockDb.partnerships.filter((p) => p.status === 'ACCEPTED').map((p) => p.counterStore.storeId),
+    mockDb.partnerships.filter((p) => p.status === 'ACCEPTED').map((p) => p.partnerStore.storeId),
   );
   const visible = mockDb.couponTemplates.filter((t) => t.isMine || acceptedPartnerStoreIds.has(t.store.storeId));
   return delay({ templates: visible });

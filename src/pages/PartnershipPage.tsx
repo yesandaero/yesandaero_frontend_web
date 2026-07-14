@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Icon } from '../components/icons/Icon';
 import { Field } from '../components/Field';
+import { categoryLabel } from '../data/constants';
 import { useApp } from '../state/context';
 import * as v from '../utils/validation';
 import type { Partnership, PartnershipStatus } from '../api/types';
@@ -26,8 +27,9 @@ function PartnershipRow({ p }: { p: Partnership }) {
   return (
     <div className="board-row">
       <div className="board-name">
-        <span className="name">{p.counterStore.name}</span>
+        <span className="name">{p.partnerStore.name}</span>
         <span className={meta.badgeClass}>{meta.label}</span>
+        <span className="empty-inline">{categoryLabel(p.partnerStore.category)}</span>
         <span className="empty-inline">{p.direction === 'SENT' ? '내가 요청' : '요청 받음'}</span>
       </div>
       <div className="promo-right">

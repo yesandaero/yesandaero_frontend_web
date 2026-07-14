@@ -3,14 +3,16 @@ import * as mock from './mock/partnerships';
 import type {
   AcceptPartnershipResponse,
   PartnershipListResponse,
+  PartnershipStatus,
   RejectPartnershipResponse,
   RequestPartnershipRequest,
   RequestPartnershipResponse,
 } from './types';
 
-export function listPartnerships(): Promise<PartnershipListResponse> {
-  if (USE_MOCK) return mock.listPartnerships();
-  return apiFetch<PartnershipListResponse>('/partnerships');
+/** status를 주면 해당 상태만 조회한다 (명세서상 선택 파라미터). */
+export function listPartnerships(status?: PartnershipStatus): Promise<PartnershipListResponse> {
+  if (USE_MOCK) return mock.listPartnerships(status);
+  return apiFetch<PartnershipListResponse>('/partnerships', { query: { status } });
 }
 
 export function requestPartnership(body: RequestPartnershipRequest): Promise<RequestPartnershipResponse> {

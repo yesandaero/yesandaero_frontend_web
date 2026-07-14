@@ -118,21 +118,21 @@ export interface UseTokenResponse {
   expiresIn: number;
 }
 
-export interface PartnershipCounterStore {
+/** 제휴 상대 가게 (GET /partnerships 응답의 partnerStore) */
+export interface PartnerStore {
   storeId: number;
   name: string;
+  category: StoreCategory;
 }
 
 export interface Partnership {
   partnershipId: number;
-  status: PartnershipStatus;
+  partnerStore: PartnerStore;
   direction: PartnershipDirection;
-  counterStore: PartnershipCounterStore;
+  status: PartnershipStatus;
   createdAt: string;
-  acceptedAt?: string | null;
 }
 
-/** GET /partnerships 응답 스키마는 명세서에 없어 추정한 형태 (배열 래핑 방식은 쿠폰 템플릿 목록과 동일하게 맞춤). */
 export interface PartnershipListResponse {
   partnerships: Partnership[];
 }

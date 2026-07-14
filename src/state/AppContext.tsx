@@ -245,7 +245,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   function requestTerminatePartnership(id: number) {
     const p = partnerships.find((x) => x.partnershipId === id);
     if (!p) return;
-    setConfirmDelete({ type: 'partnership', id, label: p.counterStore.name });
+    setConfirmDelete({ type: 'partnership', id, label: p.partnerStore.name });
   }
 
   async function loadStatistics(from: string, to: string) {
