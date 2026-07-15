@@ -1,9 +1,7 @@
 const DEFAULT_API_TARGET = 'https://pacify-unpicked-unsafe.ngrok-free.dev';
 
 export default async function handler(request, response) {
-  const path = Array.isArray(request.query.path)
-    ? request.query.path.join('/')
-    : request.query.path || '';
+  const path = String(request.query.path || '').replace(/^\/+/, '');
   const target = (process.env.API_PROXY_TARGET || DEFAULT_API_TARGET).replace(/\/$/, '');
   const query = new URLSearchParams();
 
@@ -13,7 +11,6 @@ export default async function handler(request, response) {
     else if (value !== undefined) query.set(key, value);
   });
 
-  const targetUrl = `${target}/${path}${query.size ? `?${query}` : ''}`;
   const headers = { ...request.headers };
   delete headers.host;
   delete headers.origin;
@@ -21,16 +18,16 @@ export default async function handler(request, response) {
   delete headers['content-length'];
   headers['ngrok-skip-browser-warning'] = 'true';
 
-  const hasBody = !['GET', 'HEAD'].includes(request.method || 'GET');
-  const body = hasBody
-    ? typeof request.body === 'string'
+  const method = request.method || 'GET';
+  const body = ['GET', 'HEAD'].includes(method)
+    ? undefined
+    : typeof request.body === 'string'
       ? request.body
-      : JSON.stringify(request.body ?? {})
-    : undefined;
+      : JSON.stringify(request.body ?? {});
 
   try {
-    const upstream = await fetch(targetUrl, {
-      method: request.method,
+    const upstream = await fetch(`${target}/${path}${query.size ? `?${query}` : ''}`, {
+      method,
       headers,
       body,
     });
